@@ -11,26 +11,27 @@ class TCPServer:
         self.__buffer_size = 1024
 
     def __convert_number_in_list(self, number: int) -> List[str]:
-        """_summary_
+        """Method to  convert n digits number into a list of n elements
 
         Args:
-            number (int): _description_
+            number (int): The number to be converted
 
         Returns:
-            List[str]: _description_
+            List[str]: The list which the number mapped to a element
         """
         number = [x for x in str(number)]
         return number
 
     def __analize_shot(self, true_number: List[str], number_guess: List[str]) -> str:
-        """_summary_
+        """Method to analise how many numbers of the current attempt match with the true number
 
         Args:
-            true_number (List[str]): _description_
-            user_guess (List[str]): _description_
+            true_number (List[str]): The number which the user is trying to guess
+            user_guess (List[str]): The user shot
 
         Returns:
-            str: _description_
+            str: How many numbers match wth the right index (nM) and
+            match but with the wrong index (nT), eg., nMnT being n from 0 to 3
         """
         tiro = mosca = 0
         for index, number in enumerate(number_guess):
@@ -44,11 +45,11 @@ class TCPServer:
         return output
 
     def on_new_client(self, client_socket: socket.socket, addr: Tuple) -> None:
-        """_summary_
+        """Method to connect a new client and get its data sent
 
         Args:
-            client_socket (socket.socket): _description_
-            addr (Tuple): _description_
+            client_socket (socket.socket): The client socket object to manage the connection
+            addr (Tuple): Tuple with the port and client address
         """
 
         number = np.random.randint(low=100, high=1000)
