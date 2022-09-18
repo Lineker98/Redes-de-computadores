@@ -1,4 +1,5 @@
-import socket, sys
+import socket
+import pickle
 
 
 class TCPClient:
@@ -7,6 +8,7 @@ class TCPClient:
         self.__host = "127.0.0.1"
         self.__port = 20000
         self.__buffer_size = 1024
+        self.attempts = []
 
     def __call__(self) -> None:
         """_summary_"""
@@ -16,16 +18,22 @@ class TCPClient:
                 print("Servidor executando!")
                 while True:
 
-                    dado = input("Digite o texto a ser enviado ao servidor:\n")
+                    client_entry = input("Digite sua tentativa!: ")
                     client_socket.send(
-                        dado.encode()
+                        client_entry.encode()
                     )  # texto.encode - converte a string para bytes
-                    dado = client_socket.recv(self.__buffer_size)
-                    dado_recebido = repr(
-                        dado
+
+                    server_response = client_socket.recv(self.__buffer_size)
+                    server_response = (
+                        server_response.decode()
                     )  # converte de bytes para um formato "printável"
-                    print("Recebido do servidor", dado_recebido)
-                    if dado_recebido == "bye":
+
+                    # Store the history attempts
+                    self.attempts.append(server_response)
+                    print("Histórico de tentativas:")
+                    print(*self.attempts, sep="\n")
+
+                    if server_response == "bye":
                         print("vai encerrar o socket cliente!")
                         client_socket.close()
                         break

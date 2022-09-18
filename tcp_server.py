@@ -2,6 +2,7 @@ import socket
 from threading import Thread
 from typing import Tuple, List
 import numpy as np
+import pickle
 
 
 class TCPServer:
@@ -54,26 +55,30 @@ class TCPServer:
 
         number = np.random.randint(low=100, high=1000)
         number = self.__convert_number_in_list(number=number)
+        counter_attempts = 0
         print(number)
         while True:
             try:
                 dado = client_socket.recv(self.__buffer_size)
                 if not dado:
                     break
-
-                dado_recebido = dado.decode("utf-8")
+                counter_attempts += 1
+                client_entry = dado.decode("utf-8")
                 print(
-                    f"Tentativa do cliente {addr[0]} na porta {addr[1]}: {dado_recebido}"
+                    f"Tentativa do cliente {addr[0]} na porta {addr[1]}: {client_entry}"
                 )
-                dado_recebido = self.__convert_number_in_list(dado_recebido)
+                attempt_treated = self.__convert_number_in_list(client_entry)
+
                 result = self.__analize_shot(
-                    true_number=number, number_guess=dado_recebido
+                    true_number=number, number_guess=attempt_treated
                 )
-                print(result)
-                # Envia o mesmo texto ao cliente
-                client_socket.send(dado)
-                if result == "0T3M":
-                    print("Parabéns, você venceu!")
+
+                feed_back = client_entry + " - " + result
+                client_socket.send(feed_back.encode())
+                if result == "3M0T":
+                    print(
+                        f"Parabéns, você venceu! \n Foi necessário {counter_attempts} tentativas"
+                    )
                     print(f"Vai encerrar o socket do cliente {addr[0]} !")
                     client_socket.close()
                     return
