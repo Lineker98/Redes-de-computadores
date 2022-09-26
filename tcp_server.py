@@ -45,6 +45,14 @@ class TCPServer:
         output = str(mosca) + "M" + str(tiro) + "T"
         return output
 
+    def __creat_random_number(self):
+        """Method to generate a random number avoiding repeat the ddigits"""
+        list_digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+        number = np.random.choice(list_digits, 3, replace=False)
+        number = map(str, number)
+        number = "".join(number)
+        return int(number)
+
     def on_new_client(self, client_socket: socket.socket, addr: Tuple) -> None:
         """Method to connect a new client and get its data sent
 
@@ -53,7 +61,7 @@ class TCPServer:
             addr (Tuple): Tuple with the port and client address
         """
 
-        number = np.random.randint(low=100, high=1000)
+        number = self.__creat_random_number()
         number = self.__convert_number_in_list(number=number)
         counter_attempts = 0
         print(number)
@@ -76,9 +84,8 @@ class TCPServer:
                 feed_back = client_entry + " - " + result
                 client_socket.send(feed_back.encode())
                 if result == "3M0T":
-                    print(
-                        f"Parabéns, você venceu! \n Foi necessário {counter_attempts} tentativas"
-                    )
+                    win_message = "win"
+                    client_socket.send(win_message.encode())
                     print(f"Vai encerrar o socket do cliente {addr[0]} !")
                     client_socket.close()
                     return
