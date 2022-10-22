@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import socket
 from threading import Thread, ThreadError
 
@@ -5,7 +6,7 @@ from threading import Thread, ThreadError
 class TCPCLient:
     def __init__(self) -> None:
         self.__HOST = "127.0.0.1"
-        self.__PORT = 55554
+        self.__PORT = 55555
         self.__BUFFER_SIZE = 1024
         self.attempts = []
         self.counter_attemps = 0
@@ -23,6 +24,12 @@ class TCPCLient:
                 message = self.client.recv(self.__BUFFER_SIZE).decode("ascii")
                 if message == "NICK":
                     self.client.send(self.nickname.encode("ascii"))
+                elif message[:3].isdigit():
+                    print("mensagem", message)
+                    self.attempts.append(message)
+                    print("Histórico de tentaivas:")
+                    print(*self.attempts, sep="\n")
+                    self.counter_attemps += 1
                 else:
                     print(message)
             except:

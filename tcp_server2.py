@@ -1,12 +1,13 @@
 import socket
 from threading import Thread
 import numpy as np
+from typing import Tuple, List
 
 
 class TCPServer:
     def __init__(self) -> None:
         self.__HOST = "127.0.0.1"
-        self.__PORT = 55554
+        self.__PORT = 55555
         self.__BUFFER_SIZE = 1024
         self.clients = []
         self.nick_names = []
@@ -78,6 +79,92 @@ class TCPServer:
                 client_chooser_number,
             )
             return client_chooser_number
+
+    def __convert_number_in_list(self, number: int) -> List[str]:
+        """Method to  convert n digits number into a list of n elements
+
+        Args:
+            number (int): The number to be converted
+
+        Returns:
+            List[str]: The list which the number mapped to a element
+        """
+        number = [x for x in str(number)]
+        return number
+
+    def __analize_shot(self, true_number: List[str], number_guess: List[str]) -> str:
+        """Method to analise how many numbers of the current attempt match with the true number
+
+        Args:
+            true_number (List[str]): The number which the user is trying to guess
+            user_guess (List[str]): The user shot
+
+        Returns:
+            str: How many numbers match wth the right index (nM) and
+            match but with the wrong index (nT), eg., nMnT being n from 0 to 3
+        """
+        tiro = mosca = 0
+        for index, number in enumerate(number_guess):
+            if number in true_number:
+                real_indexes = np.where(np.array(true_number) == number)[0]
+                if index in real_indexes:
+                    mosca += 1
+                else:
+                    tiro += len(real_indexes)
+        output = str(mosca) + "M" + str(tiro) + "T"
+        return output
+
+    def __creat_random_number(self):
+        """Method to generate a random number avoiding repeat the ddigits"""
+        list_digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
+        number = np.random.choice(list_digits, 3, replace=False)
+        number = map(str, number)
+        number = "".join(number)
+        return int(number)
+
+    def single_player(self, client: socket.socket, addr: Tuple) -> None:
+        """Method to connect a new client and get its data sent
+
+        Args:
+            client (socket.socket): The client socket object to manage the connection
+            addr (Tuple): Tuple with the port and client address
+        """
+
+        number = self.__creat_random_number()
+        number = self.__convert_number_in_list(number=number)
+        counter_attempts = 0
+        print(number)
+        while True:
+            try:
+
+                client.send(
+                    f"\n{self.nick_names[0]}, informe sua tentaiva:".encode("utf-8")
+                )
+                dado = client.recv(self.__BUFFER_SIZE)
+                if not dado:
+                    break
+                counter_attempts += 1
+                client_entry = dado.decode("utf-8")
+                print(
+                    f"Tentativa do cliente {addr[0]} na porta {addr[1]}: {client_entry}"
+                )
+                attempt_treated = self.__convert_number_in_list(client_entry)
+
+                result = self.__analize_shot(
+                    true_number=number, number_guess=attempt_treated
+                )
+
+                feed_back = client_entry + " - " + result
+                client.send(feed_back.encode())
+                if result == "3M0T":
+                    win_message = "win"
+                    client.send(win_message.encode())
+                    print(f"Vai encerrar o socket do cliente {addr[0]} !")
+                    client.close()
+                    return
+            except Exception as error:
+                print("Erro na conexão com o cliente")
+                return
 
     def multi_player(self, client: socket.socket):
         """Método principal para lidar com dinâmica do jogo
@@ -173,8 +260,14 @@ class TCPServer:
             )
             client.send("\nConectado ao servidor".encode("utf-8"))
 
-            thread = Thread(target=self.multi_player, args=(client,))
-            thread.start()
+            if game_mode == "m":
+                print("m")
+                thread = Thread(target=self.multi_player, args=(client,))
+                thread.start()
+            elif game_mode == "s":
+                print("HERE")
+                thread = Thread(target=self.single_player, args=(client, address))
+                thread.start()
 
 
 if __name__ == "__main__":
